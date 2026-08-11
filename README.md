@@ -6,9 +6,6 @@ Die Empfänger und Zustellungsoptionen werden einmal pro Skriptinstanz eingerich
 
 [![Open your Home Assistant instance and import this blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/osmosBe/homeassistant-scripts-blueprints/refs/heads/main/mobile_app_notification_group.yaml)
 
-> [!IMPORTANT]
-> Vor der Veröffentlichung musst du im Link des Buttons `DEIN-BENUTZERNAME` und `DEIN-REPOSITORY` durch den tatsächlichen GitHub-Benutzernamen und Repositorynamen ersetzen. Die Blueprint-Datei muss im Beispiel im Root des Branches `main` liegen.
-
 ## Funktionen
 
 - Eine feste Empfängergruppe je Skriptinstanz

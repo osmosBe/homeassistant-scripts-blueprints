@@ -85,7 +85,7 @@ Wähle alle Geräte aus, die Benachrichtigungen dieser Gruppe erhalten sollen. D
 Der Blueprint leitet den Notify-Dienst standardmäßig aus dem Gerätenamen ab:
 
 ```text
-Corinna Handy → notify.mobile_app_corinna_handy
+User Handy → notify.mobile_app_user_handy
 ```
 
 ### Abweichende Notify-Dienste
@@ -95,7 +95,7 @@ Gerätename und Notify-Dienst stimmen nicht immer überein, etwa nach einer Umbe
 Als Schlüssel sind die Home-Assistant-Geräte-ID oder der exakte Gerätename möglich. Als Wert wird die vollständige Notify-Aktion angegeben:
 
 ```yaml
-Mauricios Phone: notify.mobile_app_moro
+Test Phone: notify.mobile_app_test
 ```
 
 Die tatsächlich vorhandenen Aktionen findest du unter **Entwicklerwerkzeuge → Aktionen**, indem du nach `notify.mobile_app` suchst.

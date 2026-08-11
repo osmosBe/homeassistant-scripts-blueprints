@@ -1,0 +1,297 @@
+blueprint:
+  name: Mobile-App-Benachrichtigungsgruppe
+  description: Erstellt ein wiederverwendbares Skript für eine feste Gruppe von Mobile-App-Geräten.
+    Aufrufende Automationen übergeben nur Titel, Nachricht und optional Bestätigungsbuttons.
+    Unterstützt iOS- und Android-Optionen, eindeutige Action-IDs, parallele Aufrufe,
+    Android-Wegwischen und eine strukturierte Rückgabe an die aufrufende Automation.
+    Die Geräteauswahl und plattformspezifischen Zustellungsoptionen orientieren sich
+    am Community-Blueprint „Notifications & Announcements“ von Blacky.
+  domain: script
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    recipients:
+      name: Mobile-App-Geräte
+      description: Diese Geräte bilden die Empfängergruppe dieser Skriptinstanz. Die
+        Auswahl erfolgt einmalig; aufrufende Automationen müssen keine Geräte mehr
+        angeben.
+      selector:
+        device:
+          filter:
+          - integration: mobile_app
+          multiple: true
+    delivery_settings:
+      name: Zustellung
+      icon: mdi:bell-cog-outline
+      collapsed: true
+      input:
+        android_high_priority:
+          name: Android – hohe Priorität
+          default: false
+          selector:
+            boolean: {}
+        android_sticky:
+          name: Android – dauerhaft sichtbar
+          description: Die Meldung bleibt sichtbar, bis sie aktiv entfernt wird.
+          default: false
+          selector:
+            boolean: {}
+        android_channel:
+          name: Android – Benachrichtigungskanal
+          description: Leer lassen, um den Standardkanal zu verwenden.
+          default: ''
+          selector:
+            text:
+              multiline: false
+              multiple: false
+        ios_interruption_level:
+          name: iOS – Unterbrechungsstufe
+          default: active
+          selector:
+            select:
+              mode: dropdown
+              options:
+              - label: Standard
+                value: active
+              - label: Zeitkritisch
+                value: time-sensitive
+              - label: Kritisch
+                value: critical
+              - label: Leise
+                value: passive
+              custom_value: false
+              multiple: false
+              sort: false
+        ios_sound:
+          name: iOS – Ton
+          description: Optionaler vollständiger Dateiname des Tons.
+          default: ''
+          selector:
+            text:
+              multiline: false
+              multiple: false
+    advanced_settings:
+      name: Erweitert
+      icon: mdi:tune-variant
+      collapsed: true
+      input:
+        notify_service_overrides:
+          name: Abweichende Notify-Dienste
+          description: Optionales Schlüssel/Wert-Objekt für Geräte, deren Notify-Dienst
+            nicht dem Gerätenamen entspricht. Als Schlüssel Geräte-ID oder exakten
+            Gerätenamen, als Wert z. B. notify.mobile_app_moro angeben.
+          default: {}
+          selector:
+            object:
+              multiple: false
+        max_parallel_runs:
+          name: Maximale parallele Aufrufe
+          default: 20
+          selector:
+            number:
+              min: 1.0
+              max: 100.0
+              mode: box
+              step: 1.0
+fields:
+  title:
+    name: Titel
+    required: true
+    selector:
+      text:
+  message:
+    name: Nachricht
+    required: true
+    selector:
+      text:
+        multiline: true
+  buttons:
+    name: Bestätigungsbuttons verwenden
+    default: false
+    selector:
+      boolean:
+  confirm_text:
+    name: Text des Bestätigen-Buttons
+    default: Erledigt
+    selector:
+      text:
+  dismiss_text:
+    name: Text des Ablehnen-Buttons
+    default: Noch nicht
+    selector:
+      text:
+  timeout_minutes:
+    name: Zeitlimit in Minuten
+    description: Nur bei Bestätigungsbuttons relevant.
+    default: 360
+    selector:
+      number:
+        min: 1
+        max: 1440
+        mode: box
+  notification_tag:
+    name: Notification-Tag
+    description: Optional. Gleiche Tags ersetzen ältere Meldungen. Ohne Angabe wird
+      bei Bestätigungsbuttons automatisch ein eindeutiger Tag erzeugt.
+    default: ''
+    selector:
+      text:
+  url:
+    name: Ziel beim Antippen
+    description: Optional, z. B. /lovelace/home oder https://example.com.
+    default: ''
+    selector:
+      text:
+  icon:
+    name: Android-Icon
+    description: Optional, z. B. mdi:trash-can.
+    default: ''
+    selector:
+      icon:
+  color:
+    name: Android-Iconfarbe
+    description: Optional, z. B. red oder
+    default: ''
+    selector:
+      text:
+variables:
+  recipient_devices: !input recipients
+  service_overrides: !input notify_service_overrides
+  use_high_priority: !input android_high_priority
+  use_sticky: !input android_sticky
+  default_channel: !input android_channel
+  default_interruption_level: !input ios_interruption_level
+  default_ios_sound: !input ios_sound
+sequence:
+- alias: Aufrufdaten normalisieren
+  variables:
+    buttons_enabled: '{{ buttons | default(false) | bool }}'
+    run_token: '{{ (now().timestamp() * 1000000) | int }}_{{ range(0, 100000) | random
+      }}'
+    effective_tag: "{% if notification_tag | default('') | trim != '' %}\n  {{ notification_tag
+      | trim }}\n{% else %}\n  notification_{{ (now().timestamp() * 1000000) | int
+      }}_{{ range(0, 100000) | random }}\n{% endif %}"
+- alias: Aktionskennungen und Nachrichtendaten erzeugen
+  variables:
+    confirm_action: CONFIRM_{{ run_token }}
+    dismiss_action: DISMISS_{{ run_token }}
+    notification_data: "{% set ns = namespace(data={}) %} {% set push = namespace(data={})
+      %} {% set push.data = dict(push.data, **{'interruption-level': default_interruption_level})
+      %} {% if default_ios_sound | trim != '' %}\n  {% set push.data = dict(push.data,
+      **{'sound': default_ios_sound}) %}\n{% endif %} {% set ns.data = dict(ns.data,
+      **{'push': push.data}) %} {% if use_high_priority %}\n  {% set ns.data = dict(ns.data,
+      **{'ttl': 0, 'priority': 'high'}) %}\n{% endif %} {% if use_sticky %}\n  {%
+      set ns.data = dict(ns.data, **{'sticky': 'true'}) %}\n{% endif %} {% if default_channel
+      | trim != '' %}\n  {% set ns.data = dict(ns.data, **{'channel': default_channel})
+      %}\n{% endif %} {% if notification_tag | default('') | trim != '' or buttons_enabled
+      %}\n  {% set ns.data = dict(ns.data, **{'tag': effective_tag}) %}\n{% endif
+      %} {% if url | default('') | trim != '' %}\n  {% set ns.data = dict(ns.data,
+      **{'url': url | trim}) %}\n{% endif %} {% if icon | default('') | trim != ''
+      %}\n  {% set ns.data = dict(ns.data, **{'notification_icon': icon | trim}) %}\n{%
+      endif %} {% if color | default('') | trim != '' %}\n  {% set ns.data = dict(ns.data,
+      **{'color': color | trim}) %}\n{% endif %} {% if buttons_enabled %}\n  {% set
+      actions = [\n    {'action': confirm_action, 'title': confirm_text | default('Erledigt')},\n
+      \   {'action': dismiss_action, 'title': dismiss_text | default('Noch nicht')}\n
+      \ ] %}\n  {% set ns.data = dict(ns.data, **{'actions': actions, 'action_1_key':
+      confirm_action}) %}\n{% endif %} {{ ns.data }}"
+- alias: Nachricht an alle Geräte der Gruppe senden
+  repeat:
+    for_each: '{{ recipient_devices }}'
+    sequence:
+    - variables:
+        recipient_name: '{{ device_attr(repeat.item, ''name'') }}'
+        notify_service: '{% set by_id = service_overrides.get(repeat.item, '''') %}
+          {% set by_name = service_overrides.get(recipient_name, '''') %} {{ by_id
+          if by_id else (by_name if by_name else ''notify.mobile_app_'' ~ (recipient_name
+          | slugify)) }}'
+    - action: '{{ notify_service }}'
+      data:
+        title: '{{ title }}'
+        message: '{{ message }}'
+        data: '{{ notification_data }}'
+- alias: Normale Nachricht sofort abschließen
+  if:
+  - condition: template
+    value_template: '{{ not buttons_enabled }}'
+  then:
+  - variables:
+      script_result:
+        result: sent
+        confirmed: false
+        confirmed_by: ''
+        device_id: ''
+        tag: '{{ effective_tag if notification_tag | default('''') | trim != ''''
+          else '''' }}'
+        recipients: '{{ recipient_devices }}'
+  - stop: Nachricht wurde versendet
+    response_variable: script_result
+- alias: Auf die erste Reaktion warten
+  wait_for_trigger:
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: '{{ confirm_action }}'
+  - trigger: event
+    event_type: mobile_app_notification_action
+    event_data:
+      action: '{{ dismiss_action }}'
+  - trigger: event
+    event_type: mobile_app_notification_cleared
+    event_data:
+      action_1_key: '{{ confirm_action }}'
+  timeout:
+    minutes: '{{ timeout_minutes | default(360) | int }}'
+  continue_on_timeout: true
+- alias: Ergebnis bestimmen
+  variables:
+    response_event_type: '{{ wait.trigger.event.event_type if wait.trigger is not
+      none else '''' }}'
+    response_action: '{{ wait.trigger.event.data.action | default('''') if wait.trigger
+      is not none else '''' }}'
+    response_device_id: '{{ wait.trigger.event.data.device_id | default('''') if wait.trigger
+      is not none else '''' }}'
+- alias: Ergebnisart bestimmen
+  variables:
+    response_result: '{% if wait.trigger is none %}timeout {% elif response_event_type
+      == ''mobile_app_notification_cleared'' %}cleared {% elif response_action ==
+      confirm_action %}confirmed {% elif response_action == dismiss_action %}dismissed
+      {% else %}unknown{% endif %}'
+- alias: Bestätigende Person bestimmen
+  variables:
+    response_person: "{% if response_result == 'confirmed' and response_device_id
+      != '' %}\n  {{ device_attr(response_device_id, 'name') or 'Ein Haushaltsmitglied'
+      }}\n{% elif response_result == 'confirmed' %}\n  Ein Haushaltsmitglied\n{% else
+      %} {% endif %}"
+- alias: Meldung nach einer Reaktion von allen Geräten entfernen
+  if:
+  - condition: template
+    value_template: '{{ wait.trigger is not none }}'
+  then:
+  - repeat:
+      for_each: '{{ recipient_devices }}'
+      sequence:
+      - variables:
+          recipient_name: '{{ device_attr(repeat.item, ''name'') }}'
+          notify_service: '{% set by_id = service_overrides.get(repeat.item, '''')
+            %} {% set by_name = service_overrides.get(recipient_name, '''') %} {{
+            by_id if by_id else (by_name if by_name else ''notify.mobile_app_'' ~
+            (recipient_name | slugify)) }}'
+      - action: '{{ notify_service }}'
+        data:
+          message: clear_notification
+          data:
+            tag: '{{ effective_tag }}'
+- alias: Strukturiertes Ergebnis zurückgeben
+  variables:
+    script_result:
+      result: '{{ response_result }}'
+      confirmed: '{{ response_result == ''confirmed'' }}'
+      confirmed_by: '{{ response_person }}'
+      device_id: '{{ response_device_id }}'
+      tag: '{{ effective_tag }}'
+      recipients: '{{ recipient_devices }}'
+- stop: Benachrichtigungsablauf abgeschlossen
+  response_variable: script_result
+mode: parallel
+max: !input max_parallel_runs
+max_exceeded: warning

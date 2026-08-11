@@ -4,7 +4,7 @@ Ein wiederverwendbarer **Home-Assistant-Skript-Blueprint** für Benachrichtigung
 
 Die Empfänger und Zustellungsoptionen werden einmal pro Skriptinstanz eingerichtet. Automationen müssen danach nur noch Titel, Nachricht und bei Bedarf Bestätigungsbuttons übergeben. Dadurch bleibt die komplette Empfänger- und Mobile-App-Logik an einer zentralen Stelle.
 
-[![Open your Home Assistant instance and import this blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https%3A%2F%2Fraw.githubusercontent.com%2FDEIN-BENUTZERNAME%2FDEIN-REPOSITORY%2Fmain%2Fmobile_app_notification_group.yaml)
+[![Open your Home Assistant instance and import this blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?blueprint_url=https://raw.githubusercontent.com/osmosBe/homeassistant-scripts-blueprints/refs/heads/main/mobile_app_notification_group.yaml)
 
 > [!IMPORTANT]
 > Vor der Veröffentlichung musst du im Link des Buttons `DEIN-BENUTZERNAME` und `DEIN-REPOSITORY` durch den tatsächlichen GitHub-Benutzernamen und Repositorynamen ersetzen. Die Blueprint-Datei muss im Beispiel im Root des Branches `main` liegen.

@@ -220,7 +220,7 @@ Beispiel nach einer Bestätigung:
 ```yaml
 result: confirmed
 confirmed: true
-confirmed_by: Corinna Handy
+confirmed_by: Handy
 device_id: 0123456789abcdef0123456789abcdef
 tag: restmuell
 recipients:
@@ -342,7 +342,3 @@ Dokumentation:
 - [Home Assistant: Script Blueprint Schema](https://www.home-assistant.io/docs/blueprint/schema/)
 - [Companion App: Actionable Notifications](https://companion.home-assistant.io/docs/notifications/actionable-notifications/)
 - [Companion App: Notification Cleared](https://companion.home-assistant.io/docs/notifications/notification-cleared/)
-
-## Lizenz
-
-Füge vor der Veröffentlichung eine passende Open-Source-Lizenz zum Repository hinzu. Für einen unkompliziert wiederverwendbaren Home-Assistant-Blueprint eignet sich beispielsweise die MIT-Lizenz. Ohne Lizenz dürfen andere den öffentlich sichtbaren Code nicht automatisch verändern und weiterverbreiten.
